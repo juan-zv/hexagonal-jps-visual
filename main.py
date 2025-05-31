@@ -1,7 +1,6 @@
 import pygame
 import heapq
 import math
-from typing import List, Tuple, Optional, Set, Dict
 from enum import Enum
 import sys
 
@@ -28,7 +27,7 @@ class HexOrientation(Enum):
     FLAT_TOP = "flat"
 
 class HexGrid:
-    def __init__(self, grid: List[List[int]], orientation: HexOrientation = HexOrientation.POINTY_TOP):
+    def __init__(self, grid, orientation: HexOrientation = HexOrientation.POINTY_TOP):
         self.grid = grid
         self.rows = len(grid)
         self.cols = len(grid[0]) if grid else 0
@@ -54,7 +53,7 @@ class HexGrid:
                 5: (-1, -1)  # Northwest
             }
     
-    def get_neighbors(self, row: int, col: int) -> List[Tuple[int, int]]:
+    def get_neighbors(self, row, col):
         neighbors = []
         
         for direction, (dr, dc) in self.directions.items():
@@ -78,12 +77,12 @@ class HexGrid:
         
         return neighbors
     
-    def is_valid(self, row: int, col: int) -> bool:
+    def is_valid(self, row, col):
         return (0 <= row < self.rows and 
                 0 <= col < self.cols and 
                 self.grid[row][col] == 0)
     
-    def hex_distance(self, a: Tuple[int, int], b: Tuple[int, int]) -> float:
+    def hex_distance(self, a, b):
         r1, c1 = a
         r2, c2 = b
         
@@ -108,7 +107,7 @@ class HexGrid:
         
         return (abs(x1 - x2) + abs(y1 - y2) + abs(z1 - z2)) / 2
     
-    def get_direction(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> Optional[int]:
+    def get_direction(self, from_pos, to_pos):
         dr = to_pos[0] - from_pos[0]
         dc = to_pos[1] - from_pos[1]
         
@@ -128,8 +127,7 @@ class HexGrid:
         
         return None
     
-    def jump_in_direction(self, start: Tuple[int, int], direction: int, 
-                         goal: Tuple[int, int], max_distance: int = 3) -> Optional[Tuple[int, int]]:
+    def jump_in_direction(self, start, direction, goal, max_distance = 3):
         current = start
         distance = 0
         
@@ -156,7 +154,7 @@ class HexGrid:
         
         return current
     
-    def has_forced_neighbors(self, pos: Tuple[int, int], came_from_direction: int) -> bool:
+    def has_forced_neighbors(self, pos, came_from_direction):
         neighbors = self.get_neighbors(pos[0], pos[1])
         all_neighbors = self.get_all_hex_neighbors(pos[0], pos[1])
         
@@ -165,7 +163,7 @@ class HexGrid:
         
         return accessible_count < total_possible and accessible_count >= 3
     
-    def get_all_hex_neighbors(self, row: int, col: int) -> List[Tuple[int, int]]:
+    def get_all_hex_neighbors(self, row, col): 
         neighbors = []
         
         for direction, (dr, dc) in self.directions.items():
@@ -188,7 +186,7 @@ class HexGrid:
         
         return neighbors
     
-    def find_path(self, start: Tuple[int, int], goal: Tuple[int, int]) -> List[Tuple[int, int]]:
+    def find_path(self, start, goal):
         if not self.is_valid(start[0], start[1]) or not self.is_valid(goal[0], goal[1]):
             return []
         
@@ -198,8 +196,8 @@ class HexGrid:
         open_set = [(0, 0, start)]
         heapq.heapify(open_set)
         
-        closed_set: Set[Tuple[int, int]] = set()
-        came_from: Dict[Tuple[int, int], Tuple[int, int]] = {}
+        closed_set = set()
+        came_from = {}
         g_score = {start: 0}
         f_score = {start: self.hex_distance(start, goal)}
         
@@ -254,9 +252,9 @@ class HexGameVisualization:
         pygame.display.set_caption("Hexagonal Grid Pathfinding")
         
         # Grid settings
-        self.hex_size = 25
-        self.grid_cols = 16
-        self.grid_rows = 12
+        self.hex_size = 30
+        self.grid_cols = 8
+        self.grid_rows = 8
         
         # Initialize grid with some obstacles
         self.grid = [[0 for _ in range(self.grid_cols)] for _ in range(self.grid_rows)]
@@ -292,7 +290,7 @@ class HexGameVisualization:
             if 0 <= row < self.grid_rows and 0 <= col < self.grid_cols:
                 self.grid[row][col] = 1
     
-    def hex_to_pixel(self, row: int, col: int) -> Tuple[int, int]:
+    def hex_to_pixel(self, row, col):
         """Convert hex grid coordinates to pixel coordinates."""
         size = self.hex_size
         
@@ -302,7 +300,7 @@ class HexGameVisualization:
         
         return int(x), int(y)
     
-    def pixel_to_hex(self, x: int, y: int) -> Optional[Tuple[int, int]]:
+    def pixel_to_hex(self, x, y):
         """Convert pixel coordinates to hex grid coordinates."""
         # Approximate conversion - find closest hex center
         min_dist = float('inf')
@@ -318,7 +316,7 @@ class HexGameVisualization:
         
         return closest_hex
     
-    def draw_hexagon(self, surface, center_x: int, center_y: int, size: int, color, outline_color=BLACK):
+    def draw_hexagon(self, surface, center_x, center_y, size, color, outline_color=BLACK):
         """Draw a single hexagon."""
         points = []
         for i in range(6):
@@ -383,7 +381,7 @@ class HexGameVisualization:
             text_surface = self.font.render(path_info, True, CYAN)
             self.screen.blit(text_surface, (10, self.height - 30))
     
-    def handle_click(self, pos: Tuple[int, int], button: int):
+    def handle_click(self, pos, button):
         """Handle mouse clicks."""
         hex_pos = self.pixel_to_hex(pos[0], pos[1])
         if not hex_pos:
