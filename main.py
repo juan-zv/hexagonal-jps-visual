@@ -216,14 +216,14 @@ class HexGrid:
             neighbors = self.get_neighbors(current[0], current[1])
             
             for neighbor in neighbors:
-                if neighbor in closed_set:
-                    continue
                 
                 direction = self.get_direction(current, neighbor)
                 if direction is not None:
                     jump_point = self.jump_in_direction(current, direction, goal)
-                    if jump_point:
+                    if jump_point and self.is_valid(jump_point[0], jump_point[1]):
                         neighbor = jump_point
+                    else:
+                        continue  # skip invalid jump point
                 
                 if neighbor in closed_set:
                     continue

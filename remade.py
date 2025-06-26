@@ -2,6 +2,7 @@ import pygame
 import heapq
 import math
 import sys
+import random
 
 #Initialize Pygame
 pygame.init()
@@ -27,25 +28,32 @@ class HexGrid:
                 0 <= col < self.cols and
                 self.grid[row][col] != 1)
 
-    #TO DO: review this function   
     def get_neighbors(self, row, col):
         neighbors = []
+        
+        # For odd-q vertical layout, the directions depend on whether the column is even or odd
+        if col % 2 == 0:  # Even column
+            directions = [
+                (0, -1),   # North
+                (1, -1),   # Northeast  
+                (1, 0),    # Southeast
+                (0, 1),    # South
+                (-1, 0),   # Southwest
+                (-1, -1)   # Northwest
+            ]
+        else:  # Odd column
+            directions = [
+                (0, -1),   # North
+                (1, 0),    # Northeast
+                (1, 1),    # Southeast
+                (0, 1),    # South
+                (-1, 1),   # Southwest
+                (-1, 0)    # Northwest
+            ]
 
-        for direction in self.directions.values():
-            if col % 2 != 0:
-                if direction == (-1, -1):
-                    direction = (-1, 0)                
-                elif direction == (-1, 0):
-                    direction = (-1, +1)
-                elif direction == (+1,-1):
-                    direction = (+1, 0)
-                elif direction == (+1, 0):
-                    direction = (+1, +1)
-            else:
-                continue
-
-            new_row = row + direction[0]
-            new_col = col + direction[1]
+        for dir_row, dir_col in directions:
+            new_row = row + dir_row
+            new_col = col + dir_col
 
             if self.is_valid(new_row, new_col):
                 neighbors.append((new_row, new_col))
@@ -55,7 +63,7 @@ class HexGrid:
     def odd_q_to_cube(self, a):
         row, col = a
         x = col
-        z = row - (col - (col % 1)) // 2 #try operator bitwise AND '&'
+        z = row - (col - (col & 1)) // 2    # & or %
         y = -x - z
 
         return (x, y, z)
@@ -76,7 +84,27 @@ class HexGrid:
         dir_row = b_row - a_row
         dir_col = b_col - a_col
 
-        for direction, (expected_dir_row, expected_dir_col) in self.directions.items():
+        # Get the appropriate directions based on column parity
+        if a_col % 2 == 0:  # Even column
+            directions = {
+                0: (0, -1),   # North
+                1: (1, -1),   # Northeast  
+                2: (1, 0),    # Southeast
+                3: (0, 1),    # South
+                4: (-1, 0),   # Southwest
+                5: (-1, -1)   # Northwest
+            }
+        else:  # Odd column
+            directions = {
+                0: (0, -1),   # North
+                1: (1, 0),    # Northeast
+                2: (1, 1),    # Southeast
+                3: (0, 1),    # South
+                4: (-1, 1),   # Southwest
+                5: (-1, 0)    # Northwest
+            }
+
+        for direction, (expected_dir_row, expected_dir_col) in directions.items():
             if dir_row == expected_dir_row and dir_col == expected_dir_col:
                 return direction
         return None
@@ -120,10 +148,8 @@ class HexGrid:
     
     # FINISH this
     def find_path(self, start, goal):
-        start_row, start_col = start
-        goal_row, goal_col = goal
 
-        if not self.is_valid(start_row, start_col) or not self.is_valid(goal_col, goal_row):
+        if not self.is_valid(start[0], start[1]) or not self.is_valid(goal[0], goal[1]):
             return []
         
         if start == goal:
@@ -132,13 +158,15 @@ class HexGrid:
         open_set = [(0, 0, start)]
         heapq.heapify(open_set)
 
+        open_set_tracker = {start}
         closed_set = set()
         came_from = {}
         g_score = {start: 0}
         f_score = {start: self.cube_distance(start, goal)}
 
         while open_set:
-            current = heapq.heappop(open_set)
+            current_entry = heapq.heappop(open_set)
+            current = current_entry[2]  # Extract just the position tuple
 
             if current in closed_set:
                 continue
@@ -176,9 +204,9 @@ class HexGrid:
                     f_score[neighbor] = tentative_g_score + self.cube_distance(neighbor, goal)
 
                     #added this
-                    if neighbor not in [i[2] for i in open_set]:
+                    if neighbor not in open_set_tracker:
                         heapq.heappush(open_set, (f_score[neighbor], g_score[neighbor], neighbor))
-
+                        open_set_tracker.add(neighbor)
         return []
     
 # OLD VISUALIZATION CODE (modified to get rid of optional orientation)
@@ -213,6 +241,9 @@ class HexGameVisualization:
         # Initialize grid with some obstacles
         self.grid = [[0 for _ in range(self.grid_cols)] for _ in range(self.grid_rows)]    
         self.pathfinder = HexGrid(self.grid)
+        
+        # Add some initial obstacles
+        self.add_random_obstacles()
         
         # Game state
         self.start_pos = None
@@ -356,6 +387,15 @@ class HexGameVisualization:
             self.path_animation_progress += 0.3
             if self.path_animation_progress >= len(self.path):
                 self.animating_path = False
+    
+    def add_random_obstacles(self):
+        """Add some random obstacles to the grid."""
+        # Add a few random obstacles (about 15% of cells)
+        num_obstacles = (self.grid_rows * self.grid_cols) // 7
+        for _ in range(num_obstacles):
+            row = random.randint(0, self.grid_rows - 1)
+            col = random.randint(0, self.grid_cols - 1)
+            self.grid[row][col] = 1
     
     def reset(self):
         """Reset the game state."""
