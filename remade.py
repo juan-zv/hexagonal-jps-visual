@@ -4,10 +4,15 @@ import math
 import sys
 import random
 
-#Initialize Pygame
-pygame.init()
+'''
+Note:
+    - In this code some functions take in a position which is then separated into row and column while
+        others take in a position as a tuple (row, col) directly.
+    - The grid being used in this code is an odd-q vertical layout hexagonal grid where
+        the even columns are shifted up and the odd columns are shifted down.
+    - 0 is a walkable cell, 1 is an obstacle.
 
-#OddQ vertical layout shoves odd columns down
+'''
 
 class HexGrid:
     def __init__(self, grid):
@@ -23,11 +28,13 @@ class HexGrid:
                 5: (-1, -1)  # Northwest
                 }
         
+    # Check is a position is valid => within bonds and not and obstacle (1)    
     def is_valid(self, row, col):
         return (0 <= row < self.rows and
                 0 <= col < self.cols and
                 self.grid[row][col] != 1)
 
+    # Get neighbors of a hexagon at (row, col) 
     def get_neighbors(self, row, col):
         neighbors = []
         
@@ -60,6 +67,7 @@ class HexGrid:
         
         return neighbors
     
+    # Convert odd-q coordinates to cube coordinates. This helps with distance calculations
     def odd_q_to_cube(self, a):
         row, col = a
         x = col
@@ -68,6 +76,7 @@ class HexGrid:
 
         return (x, y, z)
     
+    # Calculate the distance between two hexagons using cube coordinates
     def cube_distance(self, a, b):
         a_cube = self.odd_q_to_cube(a)
         b_cube = self.odd_q_to_cube(b)
@@ -76,7 +85,7 @@ class HexGrid:
                 abs(a_cube[1] - b_cube[1]) +
                 abs(a_cube[2] - b_cube[2])) // 2
     
-    #TO DO: double check this function
+    #TO DO: Review this function (columns and rows)
     def get_directions(self, a, b):
         a_row, a_col = a
         b_row, b_col = b
@@ -211,6 +220,9 @@ class HexGrid:
     
 # OLD VISUALIZATION CODE (modified to get rid of optional orientation)
 
+#Initialize Pygame
+pygame.init()
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (128, 128, 128)
@@ -235,9 +247,9 @@ class HexGameVisualization:
         
         # Grid settings
         self.hex_size = 30
-        self.grid_cols = 8
-        self.grid_rows = 8
-        
+        self.grid_cols = 20
+        self.grid_rows = 10
+
         # Initialize grid with some obstacles
         self.grid = [[0 for _ in range(self.grid_cols)] for _ in range(self.grid_rows)]    
         self.pathfinder = HexGrid(self.grid)
