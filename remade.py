@@ -129,7 +129,7 @@ class HexGrid:
 
         return accessible_neighbors < total_possible and accessible_neighbors >= 3
     
-    def jump_in_direction(self, start, direction, goal, max_distance=3):
+    def jump_in_direction(self, start, direction, goal, max_distance=1):
         current = start
         distance = 0
 
